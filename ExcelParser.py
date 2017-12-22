@@ -7,9 +7,9 @@ import openpyxl
 class ExcelParser:
     treshhold = 5
     
-    def __init__(self, file):
+    def __init__(self, file, output="database_dump"):
         self.document = openpyxl.load_workbook(file)
-	self.data = []
+	self.output = output
 
     def sheets(self):
         sheets = self.document.get_sheet_names()
@@ -84,7 +84,9 @@ class ExcelParser:
 		    raise Exception("Data integritiy could not be established, there are rows with varying columns on {} at {}".format(description, row))
 	except Exception as e:
 	    pass
-	sql = "CREATE TABLE `{}` IF NOT EXISTS(".format(table_name)
+	sql = description
+	sql += "\n--Schema"
+	sql += "\nCREATE TABLE `{}` IF NOT EXISTS(".format(table_name)
 
 	for c, column_name in enumerate(data[0]):
 	    if column_name is None:
@@ -95,8 +97,7 @@ class ExcelParser:
 	sql += "-- data"
 	for row in data[1:]:
 	    sql += "\nINSERT INTO `{}` VALUES('{}');".format(table_name, "','".join(map(str, row)))
-	with open ('database_dump', 'a') as file:
-	    file.write(sql)
+        self.write_out(sql)
 
     def to_usable(self, s):
 	s = str(s)
@@ -106,12 +107,14 @@ class ExcelParser:
 	_type = ""
 	
 	for row in data:
-	    if type(row[position]) is str:
-		_type = "VARCHAR(255)"
-	    elif type(row[position]) is int and _type != "VARCHAR(255)":
+	    if type(row[position]) is int and _type != "VARCHAR(255)":
 		_type = "INT"
 	    elif type(row[position]) is float and _type != "VARCHAR(255)":
 		_type =  "DECIMAL (20,2)"
 	    else:
                _type = "VARCHAR(255)" 
 	return _type
+
+    def write_out(self, sql):
+	with open (self.output, 'a') as file:
+	    file.write(sql)

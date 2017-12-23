@@ -85,8 +85,9 @@ class ExcelParser:
 	except Exception as e:
 	    pass
 	sql = description
+	sql += "\n CREATE DATABASE IF NOT EXISTS {0} CHARSET=UTF8; USE {0};".format(self.output)
 	sql += "\n--Schema"
-	sql += "\nCREATE TABLE `{}` IF NOT EXISTS(".format(table_name)
+	sql += "\nCREATE TABLE IF NOT EXISTS `{}`(".format(table_name)
 
 	for c, column_name in enumerate(data[0]):
 	    if column_name is None:
@@ -101,6 +102,7 @@ class ExcelParser:
 
     def to_usable(self, s):
 	s = str(s)
+	s.replace(".", "_")
 	return s.replace(" ", "_")
 
     def sql_type(self, data, position):
@@ -118,3 +120,4 @@ class ExcelParser:
     def write_out(self, sql):
 	with open (self.output, 'a') as file:
 	    file.write(sql)
+
